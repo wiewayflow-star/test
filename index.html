@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Эфир</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #181818;
+    --line: #262626;
+    --text: #f2f2f2;
+    --muted: #8c8c8c;
+    --faint: #5a5a5a;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 400 15px/1.45 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+  main { max-width: 760px; margin: 0 auto; padding: 56px 20px 150px; }
+  h1 { font-size: 15px; font-weight: 700; letter-spacing: .02em; margin-bottom: 40px; }
+
+  .search { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+  .search:focus-within { border-color: var(--text); }
+  .search svg { flex: none; color: var(--muted); }
+  .search input {
+    flex: 1; min-width: 0; background: none; border: 0; outline: 0;
+    color: var(--text); font-family: inherit; font-size: 22px; font-weight: 500; line-height: 1.3;
+  }
+  .search input::placeholder { color: var(--faint); }
+
+  .status { color: var(--muted); padding: 28px 0; }
+
+  .list { list-style: none; padding: 0; margin-top: 12px; }
+  .row {
+    display: grid; grid-template-columns: 48px 1fr auto; gap: 14px; align-items: center;
+    width: 100%; padding: 10px 8px; border-radius: 8px; text-align: left;
+  }
+  .row:hover { background: var(--surface); }
+  .row.active { background: var(--surface); }
+  .row img, .ph { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; background: var(--line); display: block; }
+  .row .t { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row.active .t { font-weight: 700; }
+  .row .a { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .meta { text-align: right; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .row .meta small { display: block; color: var(--faint); font-size: 12px; }
+  .info { min-width: 0; }
+
+  .player {
+    position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line);
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .player-in { max-width: 760px; margin: 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center; }
+  .now { display: flex; gap: 12px; align-items: center; min-width: 0; }
+  .now img, .now .ph { width: 44px; height: 44px; flex: none; border-radius: 6px; object-fit: cover; }
+  .now .t { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .now .a { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ctrl { display: flex; align-items: center; gap: 6px; }
+  .ctrl button { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); }
+  .ctrl button:hover { color: var(--text); }
+  .ctrl .play { background: var(--text); color: var(--bg); width: 44px; height: 44px; }
+  .ctrl .play:hover { color: var(--bg); background: #fff; }
+  .vol { justify-self: end; display: flex; align-items: center; gap: 8px; color: var(--muted); }
+
+  .seek { max-width: 760px; margin: 10px auto 0; display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .seek span { width: 38px; }
+  .seek span:last-child { text-align: right; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; height: 16px; background: transparent; flex: 1; min-width: 0; cursor: pointer;
+    --p: 0%;
+  }
+  input[type=range]::-webkit-slider-runnable-track { height: 3px; border-radius: 2px; background: linear-gradient(to right, var(--text) var(--p), var(--line) var(--p)); }
+  input[type=range]::-moz-range-track { height: 3px; border-radius: 2px; background: var(--line); }
+  input[type=range]::-moz-range-progress { height: 3px; border-radius: 2px; background: var(--text); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; border-radius: 50%; background: var(--text); margin-top: -4px; }
+  input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border: 0; border-radius: 50%; background: var(--text); }
+  .vol input { width: 90px; flex: none; }
+
+  @media (max-width: 640px) {
+    main { padding-top: 32px; }
+    .player-in { grid-template-columns: 1fr auto; }
+    .vol { display: none; }
+    .row { grid-template-columns: 44px 1fr auto; }
+    .row img, .ph { width: 44px; height: 44px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .row, .search { transition: background-color .12s, border-color .12s; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Эфир</h1>
+  <form class="search" id="form" role="search">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="Исполнитель или трек" autocomplete="off" autofocus aria-label="Поиск">
+  </form>
+  <div class="status" id="status">Введите название, и трек найдётся сам. Русская музыка ищется в Hitmos, зарубежная в YouTube Music.</div>
+  <ul class="list" id="list"></ul>
+</main>
+
+<div class="player">
+  <div class="player-in">
+    <div class="now">
+      <div class="ph" id="cover"></div>
+      <div style="min-width:0"><div class="t" id="nt">Ничего не играет</div><div class="a" id="na"></div></div>
+    </div>
+    <div class="ctrl">
+      <button id="prev" aria-label="Предыдущий"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+      <button id="toggle" class="play" aria-label="Играть"><svg id="ico" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+      <button id="next" aria-label="Следующий"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+    </div>
+    <div class="vol">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
+      <input id="vol" type="range" min="0" max="1" step="0.01" value="1" aria-label="Громкость">
+    </div>
+  </div>
+  <div class="seek"><span id="cur">0:00</span><input id="seek" type="range" min="0" max="1000" value="0" aria-label="Перемотка"><span id="dur">0:00</span></div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const audio = new Audio();
+const SRC = { hm: 'Hitmos', ytm: 'YouTube Music', yt: 'YouTube' };
+const PLAY = '<path d="M8 5v14l11-7z"/>', PAUSE = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
+let list = [], cur = -1;
+
+const fmt = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const esc = (s = '') => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const stream = (t) => '/api/stream?' + (t.id ? 'yt=' + encodeURIComponent(t.id) : 'hm=' + encodeURIComponent(t.url));
+const setRange = (el) => el.style.setProperty('--p', (el.value - el.min) / (el.max - el.min) * 100 + '%');
+const coverHtml = (t) => t.cover ? `<img src="${esc(t.cover)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<div class="ph"></div>';
+
+async function find(q, only) {
+  const r = await fetch('/api/search?q=' + encodeURIComponent(q) + (only ? '&only=' + only : ''));
+  return r.json();
+}
+
+function render() {
+  $('#list').innerHTML = list.map((t, i) => `
+    <li><button class="row${i === cur ? ' active' : ''}" data-i="${i}">
+      ${coverHtml(t)}
+      <div class="info"><div class="t">${esc(t.title)}</div><div class="a">${esc(t.artist)}</div></div>
+      <div class="meta">${t.duration ? fmt(t.duration) : ''}<small>${SRC[t.src]}</small></div>
+    </button></li>`).join('');
+}
+
+function setPlaying(on) { $('#ico').innerHTML = on ? PAUSE : PLAY; $('#toggle').setAttribute('aria-label', on ? 'Пауза' : 'Играть'); }
+
+function play(i) {
+  const t = list[i]; if (!t) return;
+  cur = i;
+  audio.src = stream(t);
+  audio.play().catch(() => {});
+  $('#nt').textContent = t.title; $('#na').textContent = t.artist;
+  const c = $('#cover'); c.outerHTML = t.cover ? `<img id="cover" src="${esc(t.cover)}" alt="" referrerpolicy="no-referrer">` : '<div class="ph" id="cover"></div>';
+  document.title = t.title + ' · Эфир';
+  render();
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artist, artwork: t.cover ? [{ src: t.cover }] : [] });
+  }
+}
+
+async function runSearch(q) {
+  $('#status').textContent = 'Ищу…'; $('#list').innerHTML = '';
+  try { list = await find(q); } catch { list = []; }
+  cur = -1;
+  $('#status').textContent = list.length ? '' : 'Ничего не найдено. Попробуйте изменить запрос.';
+  render();
+}
+
+$('#form').addEventListener('submit', (e) => { e.preventDefault(); const q = $('#q').value.trim(); if (q) { runSearch(q); $('#q').blur(); } });
+$('#list').addEventListener('click', (e) => { const b = e.target.closest('.row'); if (b) play(+b.dataset.i); });
+$('#toggle').onclick = () => (audio.src ? (audio.paused ? audio.play() : audio.pause()) : list.length && play(0));
+$('#next').onclick = () => cur + 1 < list.length && play(cur + 1);
+$('#prev').onclick = () => (audio.currentTime > 3 ? (audio.currentTime = 0) : cur > 0 && play(cur - 1));
+
+$('#seek').addEventListener('input', (e) => { setRange(e.target); if (audio.duration) audio.currentTime = e.target.value / 1000 * audio.duration; });
+$('#vol').addEventListener('input', (e) => { audio.volume = +e.target.value; setRange(e.target); });
+setRange($('#vol')); setRange($('#seek'));
+
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration) return;
+  const s = $('#seek'); s.value = audio.currentTime / audio.duration * 1000; setRange(s);
+  $('#cur').textContent = fmt(audio.currentTime); $('#dur').textContent = fmt(audio.duration);
+});
+audio.addEventListener('play', () => setPlaying(true));
+audio.addEventListener('pause', () => setPlaying(false));
+audio.addEventListener('ended', () => $('#next').click());
+
+// Если трек из Hitmos не открылся, берём тот же запрос на YouTube
+audio.addEventListener('error', async () => {
+  const t = list[cur]; if (!t || t.src !== 'hm' || t.retried) { if (t) $('#status').textContent = 'Не удалось воспроизвести этот трек.'; return; }
+  t.retried = true;
+  $('#status').textContent = 'Трек недоступен в Hitmos, ищу на YouTube…';
+  try {
+    const alt = (await find(t.artist + ' ' + t.title, 'yt'))[0];
+    if (alt) { list[cur] = alt; $('#status').textContent = ''; play(cur); return; }
+  } catch {}
+  $('#status').textContent = 'Не удалось воспроизвести этот трек.';
+});
+
+if ('mediaSession' in navigator) {
+  navigator.mediaSession.setActionHandler('nexttrack', () => $('#next').click());
+  navigator.mediaSession.setActionHandler('previoustrack', () => $('#prev').click());
+}
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); $('#toggle').click(); }
+});
+</script>
+</body>
+</html>
